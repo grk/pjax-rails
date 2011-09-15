@@ -1,19 +1,20 @@
 module Pjax
   extend ActiveSupport::Concern
-  
-  #included do
-    #layout ->(c) { pjax_request? ? false : 'application' }
-  #end
-  
-  private  
+
+  included do
+    layout ->(c) { pjax_request? ? false : 'application' }
+    helper_method :pjax_request?
+  end
+
+  private
     def redirect_pjax_to(action, url = nil)
       new_url = url_for(url ? url : { action: action })
-      
+
       render js: <<-EJS
         if (!window.history || !window.history.pushState) {
           window.location.href = '#{new_url}';
         } else {
-          $('[data-pjax-container]').html(#{render_to_string("#{action}.html.haml").to_json});
+          $('[data-pjax-container]').html(#{render_to_string("#{action}.html", layout: false).to_json});
           $(document).trigger('end.pjax');
 
           var title = $.trim($('[data-pjax-container]').find('title').remove().text());
